@@ -1,18 +1,56 @@
 <script>
-	import About from "./components/About.svelte";
-    import Capture from "./components/Capture.svelte";
-	import Person from "./components/Person.svelte";
-    import Skills from "./components/Skills.svelte";
-	import Text from "./components/Text.svelte";
-	export let name;
-	export let lastName;
-	let svelteLogo = "https://arepa.s3.amazonaws.com/svelte-logo.png"
 
+	let files;
+	let videoRef;
+	let frame;
+	let stream;
+	let track;
+	let screenList=[];
+	let container;
+	
 
-	const data = {
-		name: 'manu',
-		lastName:'castelnovo',
-		age: 27
+	const constraints = {
+		audio:true,
+		video:{ height:200,width:200
+  }
+}
+		
+	
+
+	async function init(){
+
+		try {
+			stream = await navigator.mediaDevices.getUserMedia(constraints);
+			videoRef.srcObject = stream;
+			
+			
+			// handleSuccess(stream);
+			
+			console.log(stream)
+		} catch (error) {
+			console.error(error)
+		}
+	}
+	init()
+
+	async function getFrame() {
+
+		track = stream.getVideoTracks()[0]
+		const imageCapture = new ImageCapture(track);
+		const bitmap = await imageCapture.grabFrame();
+		screenList.push(bitmap);
+
+		container.innerHTML = '';
+		screenList.forEach(element => {
+			let child = document.createElement('canvas');
+			child.width=element.width;
+			child.height=element.height;
+			child.classList.add('screen');
+			let context = child.getContext('2d');
+			context.drawImage(element,0,0);
+			container.appendChild(child);
+		});
+		console.log(screenList)
 	}
 </script>
 
@@ -56,9 +94,49 @@
 			max-width: none;
 		}
 	}
+
+	.screen{
+		display: flex;
+		flex-direction: row;
+		gap:20px;
+		justify-content: center;
+		flex-wrap: wrap;
+	}
 </style>
 
 <main>
-	<Capture/>
+
+	<input type="file" bind:files/>
+	
+	{#if files && files[0]}
+    <p>
+        {files[0]}
+		
+    </p>
+	<img src={URL.createObjectURL(files[0])} alt="">
+	{/if}
+
+
+<video  bind:this={videoRef} autoplay={true}>
+</video>
+
+<button on:click={getFrame}>
+	get frame
+</button>
+
+
+<div bind:this={container} class="screen">
+
+	<!-- <canvas id={screen.id} width="200" height="100"/> -->
+
+</div>
+
+
+
+
+
+
+
+
 
 </main>
